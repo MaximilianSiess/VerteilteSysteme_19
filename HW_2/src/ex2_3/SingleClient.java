@@ -1,6 +1,5 @@
 package ex2_3;
 
-import org.json.*;
 import java.io.*;
 import java.net.*;
 
