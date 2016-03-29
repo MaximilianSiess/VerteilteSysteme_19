@@ -11,6 +11,11 @@ public class SingleClient {
 	
 	private int argument1, argument2;
 	private String operator;
+	
+	private Socket requestSocket;
+	private ObjectOutputStream out;
+	private ObjectInputStream in;
+	private String result = "";
 
 	private void inputValues() {
 		boolean done = false;
@@ -85,12 +90,60 @@ public class SingleClient {
 		}
 	}
 	
+	private void attemptConnection() {
+		try {
+			
+	        requestSocket = new Socket("localhost", 2004);
+	        System.out.println("Connected to localhost in port 2004");
+	        
+	        out = new ObjectOutputStream(requestSocket.getOutputStream());
+	        out.flush();
+	        in = new ObjectInputStream(requestSocket.getInputStream());
+	        
+	        // Write request to server
+	        String request = "{ \"service\": \"" + operator + "\","
+	        					+ " \"a1\": \"" + argument1 + "\","
+	        					+ " \"a2\": \"" + argument2 + "\","
+	        						+ " \"name\": \"ourservice\"}";
+	        out.writeObject(request);
+	        
+	        // Wait for result
+	        while(result.equals("")) {
+	        		try {
+	        			result = (String)in.readObject();
+	        		} catch (ClassNotFoundException e) {
+	        			System.err.println("data received in unknown format");
+	        		}
+            }
+	        
+	        System.out.println("Answer: " + result);
+	        
+		} catch(UnknownHostException unknownHost){
+            System.err.println("You are trying to connect to an unknown host!");
+        }
+        catch(IOException ioException){
+            ioException.printStackTrace();
+        }
+        finally{
+            //4: Closing connection
+            try{
+                in.close();
+                out.close();
+                requestSocket.close();
+            }
+            catch(IOException ioException){
+                ioException.printStackTrace();
+            }
+        }
+	}
+	
 	public static void main(String[] args) {
 		SingleClient client = new SingleClient();
 		
 		System.out.println("*****************CLIENT**************");
 		
 		client.inputValues();
+		client.attemptConnection();
 		
 		System.out.println("Shutting down...");
 	}
