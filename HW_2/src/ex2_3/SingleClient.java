@@ -1,14 +1,18 @@
 package ex2_3;
 
+import org.json.*;
+import java.io.*;
+import java.net.*;
+
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class SingleClient {
 	
-	private static int argument1, argument2;
-	private static String operator;
+	private int argument1, argument2;
+	private String operator;
 
-	private static void inputValues() {
+	private void inputValues() {
 		boolean done = false;
 		
 		while (!done) {
@@ -82,11 +86,11 @@ public class SingleClient {
 	}
 	
 	public static void main(String[] args) {
+		SingleClient client = new SingleClient();
+		
 		System.out.println("*****************CLIENT**************");
 		
-		inputValues();
-		System.out.println(operator + " " + argument1 + " " + argument2);
-		
+		client.inputValues();
 		
 		System.out.println("Shutting down...");
 	}
