@@ -13,8 +13,8 @@ public class SingleServer {
 	private String request = "";
 	
 	void run() {
+		/*
 		try{
-
             providerSocket = new ServerSocket(2004, 10);
 
             System.out.println("Waiting for connection");
@@ -54,6 +54,7 @@ public class SingleServer {
                 ioException.printStackTrace();
             }
         }
+        */
 	}
 
 	public static void main(String[] args) {
