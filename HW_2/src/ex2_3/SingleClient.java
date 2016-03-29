@@ -16,11 +16,11 @@ public class SingleClient {
 	private ObjectInputStream in;
 	private String result = "";
 
-	private void inputValues() {
+	private boolean inputValues() {
 		boolean done = false;
 		
 		while (!done) {
-			System.out.println("1)+ 2)- 3)* 4)lucas");
+			System.out.println("1)+ 2)- 3)* 4)lucas 5)EXIT");
 			System.out.print(">");
 			
 			try {
@@ -44,6 +44,8 @@ public class SingleClient {
 					done = true;
 					operator = "lucas";
 					break;
+				case 5:
+					return false;
 				default:
 					System.out.println("Not a valid input\n\n");
 			}
@@ -87,11 +89,13 @@ public class SingleClient {
 				}
 			}
 		}
+		
+		return true;
 	}
 	
 	private void attemptConnection() {
+		/*
 		try {
-			
 	        requestSocket = new Socket("localhost", 2004);
 	        System.out.println("Connected to localhost in port 2004");
 	        
@@ -134,6 +138,7 @@ public class SingleClient {
                 ioException.printStackTrace();
             }
         }
+        */
 	}
 	
 	public static void main(String[] args) {
@@ -141,8 +146,9 @@ public class SingleClient {
 		
 		System.out.println("*****************CLIENT**************");
 		
-		client.inputValues();
-		client.attemptConnection();
+		while (client.inputValues()) {
+			client.attemptConnection();
+		}
 		
 		System.out.println("Shutting down...");
 	}
