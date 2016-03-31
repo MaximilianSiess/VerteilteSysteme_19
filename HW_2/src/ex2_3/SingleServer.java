@@ -7,63 +7,65 @@ import java.net.*;
 public class SingleServer {
 	
 	private ServerSocket providerSocket;
-	private Socket connection = null;
-	private ObjectOutputStream out;
-	private ObjectInputStream in;
+	private static Socket connection = null;
 	private String request = "";
+	private static boolean running = true;
 	
-	void run() {
-		/*
+	void establishConnection() {
 		try{
-            providerSocket = new ServerSocket(2004, 10);
+            providerSocket = new ServerSocket(Protocol.getPortNumber(), 10);
 
             System.out.println("Waiting for connection");
             connection = providerSocket.accept();
             
             System.out.println("Connection received from " + connection.getInetAddress().getHostName());
-            
 
-            out = new ObjectOutputStream(connection.getOutputStream());
-            out.flush();
-            in = new ObjectInputStream(connection.getInputStream());
-            
-            //sendMessage("Connection successful");
-            
-            //Wait for the client to send a request
-            while(request.equals("")){
-                try{
-                    request = (String)in.readObject();
-                    System.out.println("client>" + request);
-                }
-                catch(ClassNotFoundException classnot){
-                    System.err.println("Data received in unknown format");
-                }
-            }
         }
         catch(IOException ioException){
             ioException.printStackTrace();
         }
-        finally{
-            //4: Closing connection
-            try{
-                in.close();
-                out.close();
-                providerSocket.close();
-            }
-            catch(IOException ioException){
-                ioException.printStackTrace();
-            }
-        }
-        */
 	}
 
 	public static void main(String[] args) {
+		
+		//TODO(Max): Hook does not work inside Eclipse
+		
+		// Add a hook for shutdown exception handling
+		Runtime.getRuntime().addShutdownHook(new Thread()
+        {
+            @Override
+            public void run()
+            {
+                System.out.println("Shutdown hook activated!");
+                running = false;
+                try {
+                	Protocol.closeSocket(connection);
+                }
+                catch (IOException e) {
+                	System.out.println("Could not close ServerSocket!");
+                	e.printStackTrace();
+                }
+                
+            }
+        });
+		
+		// Server logic
 		SingleServer server = new SingleServer();
 		
-		while(true) {
-			server.run();
+		try {
+			server.establishConnection();
+			Protocol.InitServer(connection);
+			
+			while(running) {
+				Protocol.reply();
+			}
+			
+			Protocol.closeSocket(connection);
+		} catch (IOException e) {
+			System.out.println("Could not establish a connection!");
+			e.printStackTrace();
+			
 		}
-
 	}
 
 }

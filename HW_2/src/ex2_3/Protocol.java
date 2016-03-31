@@ -1,31 +1,38 @@
+package ex2_3;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.StringTokenizer;
 
 public class Protocol {
 	private static final int PORTNUMBER = 1234;
+	private static BufferedReader ServerIn, ClientIn;
+	private static PrintWriter ServerOut, ClientOut;
 
 	// TODO Safe closing of in and out
 
+	public static void InitClient(Socket socket) throws IOException {
+		ClientIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		ClientOut = new PrintWriter(socket.getOutputStream(), true);
+	}
+	
+	public static void InitServer(Socket socket) throws IOException {
+		ServerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		ServerOut = new PrintWriter(socket.getOutputStream(), true);
+	}
+	
 	public static void closeSocket(Socket socket) throws IOException {
 		socket.close();
 	}
 
-	public static int request(Socket socket, Operation operation, int[] integers) throws IOException {
+	public static int request(Operation operation, int[] integers) throws IOException {
 		int result = 0;
 		boolean reading = false;
 		String readString;
-
-		BufferedReader in;
-		PrintWriter out;
-
-		in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-		out = new PrintWriter(socket.getOutputStream(), true);
 
 		// Build OutputString
 		StringBuffer string = new StringBuffer(operation.name());
@@ -36,27 +43,22 @@ public class Protocol {
 		}
 
 		// Print operation and integer(s) to output
-		out.println(string);
+		ClientOut.println(string);
 
 		// Read InputString
 		while (!reading) {
-			readString = in.readLine();
+			readString = ClientIn.readLine();
 			if (readString != null) {
 				reading = true;
 				result = Integer.parseInt(readString);
 			}
 		}
 
-		in.close();
-		out.close();
-
 		return result;
 	}
 
-	public static void reply(Socket socket) throws IOException {
-		BufferedReader in;
-		PrintWriter out;
-		String inString;
+	public static void reply() throws IOException {
+		String inString = null;
 		StringTokenizer stringTokenizer;
 		String operation;
 		Operation op;
@@ -64,11 +66,9 @@ public class Protocol {
 		int first;
 		int second;
 
-		in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		out = new PrintWriter(socket.getOutputStream(), true);
-
 		// Read InputStream
-		inString = in.readLine();
+		while (inString == null)
+			inString = ServerIn.readLine();
 		stringTokenizer = new StringTokenizer(inString, " ");
 		operation = stringTokenizer.nextToken();
 		op = Operation.valueOf(operation);
@@ -91,11 +91,10 @@ public class Protocol {
 		}
 
 		// Print result to output
-		out.println(result);
-
-		in.close();
-		out.close();
-		socket.close();
+		System.out.println(result);
+		
+		// Send result back to client
+		ServerOut.println(result);
 	}
 
 	public static int getPortNumber() {

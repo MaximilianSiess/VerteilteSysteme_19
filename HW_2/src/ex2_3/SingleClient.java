@@ -8,13 +8,15 @@ import java.util.Scanner;
 
 public class SingleClient {
 	
-	private int argument1, argument2;
-	private String operator;
+	private static int arguments[];
+	private static Operation operator;
 	
-	private Socket requestSocket;
-	private ObjectOutputStream out;
-	private ObjectInputStream in;
+	private static Socket requestSocket;
 	private String result = "";
+	
+	SingleClient () {
+		arguments = new int[2];
+	}
 
 	private boolean inputValues() {
 		boolean done = false;
@@ -30,19 +32,19 @@ public class SingleClient {
 				switch(input) {
 				case 1:
 					done = true;
-					operator = "+";
+					operator = Operation.ADDITION;
 					break;
 				case 2:
 					done = true;
-					operator = "-";
+					operator = Operation.SUBSTRAKTION;
 					break;
 				case 3:
 					done = true;
-					operator = "*";
+					operator = Operation.MULTIPLIKATION;
 					break;
 				case 4:
 					done = true;
-					operator = "lucas";
+					operator = Operation.LUCAS;
 					break;
 				case 5:
 					return false;
@@ -64,7 +66,7 @@ public class SingleClient {
 			try {
 				Scanner in = new Scanner(System.in);
 				int input = in.nextInt();
-				argument1 = input;
+				arguments[0] = input;
 				done = true;
 			} catch (InputMismatchException e) {
 				System.out.println("Input is not an Integer!\n\n");
@@ -72,7 +74,7 @@ public class SingleClient {
 		}
 		
 		// Skip if operator is unary
-		if (operator != "lucas") {
+		if (operator != Operation.LUCAS) {
 			done = false;
 			
 			while (!done) {
@@ -82,7 +84,7 @@ public class SingleClient {
 				try {
 					Scanner in = new Scanner(System.in);
 					int input = in.nextInt();
-					argument2 = input;
+					arguments[1] = input;
 					done = true;
 				} catch (InputMismatchException e) {
 					System.out.println("Input is not an Integer!\n\n");
@@ -93,63 +95,36 @@ public class SingleClient {
 		return true;
 	}
 	
-	private void attemptConnection() {
-		/*
-		try {
-	        requestSocket = new Socket("localhost", 2004);
-	        System.out.println("Connected to localhost in port 2004");
-	        
-	        out = new ObjectOutputStream(requestSocket.getOutputStream());
-	        out.flush();
-	        in = new ObjectInputStream(requestSocket.getInputStream());
-	        
-	        // Write request to server
-	        String request = "{ \"service\": \"" + operator + "\","
-	        					+ " \"a1\": \"" + argument1 + "\","
-	        					+ " \"a2\": \"" + argument2 + "\","
-	        						+ " \"name\": \"ourservice\"}";
-	        out.writeObject(request);
-	        
-	        // Wait for result
-	        while(result.equals("")) {
-	        		try {
-	        			result = (String)in.readObject();
-	        		} catch (ClassNotFoundException e) {
-	        			System.err.println("data received in unknown format");
-	        		}
-            }
-	        
-	        System.out.println("Answer: " + result);
-	        
-		} catch(UnknownHostException unknownHost){
-            System.err.println("You are trying to connect to an unknown host!");
-        }
-        catch(IOException ioException){
-            ioException.printStackTrace();
-        }
-        finally{
-            //4: Closing connection
-            try{
-                in.close();
-                out.close();
-                requestSocket.close();
-            }
-            catch(IOException ioException){
-                ioException.printStackTrace();
-            }
-        }
-        */
-	}
-	
 	public static void main(String[] args) {
 		SingleClient client = new SingleClient();
 		
 		System.out.println("*****************CLIENT**************");
 		
-		while (client.inputValues()) {
-			client.attemptConnection();
+		try {
+			
+			// Establish connection
+			requestSocket = new Socket("localhost", Protocol.getPortNumber());
+	        System.out.println("Connected to localhost in port " + Protocol.getPortNumber());
+	        
+	        Protocol.InitClient(requestSocket);
+			
+	        // Get input and hand it to protocol, as often as the user wants
+			while (client.inputValues()) {
+				int result = Protocol.request(operator, arguments);
+				System.out.println("Answer: " + result);
+			}
+			
+			Protocol.closeSocket(requestSocket);
+			
+		} catch (UnknownHostException e) {
+			System.out.println("Could not resolve host!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Could not establish connection!");
+			e.printStackTrace();
 		}
 		
+		// We are done here
 		System.out.println("Shutting down...");
 	}
 
