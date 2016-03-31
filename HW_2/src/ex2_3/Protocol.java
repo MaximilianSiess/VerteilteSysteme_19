@@ -1,43 +1,30 @@
 package ex2_3;
 
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.StringTokenizer;
 
 public class Protocol {
 	private static final int PORTNUMBER = 1234;
-	private static Socket serverSocket, clientSocket;
 	private static BufferedReader ServerIn, ClientIn;
 	private static PrintWriter ServerOut, ClientOut;
 
-	// TODO Safe closing of in and out
-
 	public static void InitClient(Socket socket) throws IOException {
-		clientSocket = socket;
 		ClientIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		ClientOut = new PrintWriter(socket.getOutputStream(), true);
 	}
 	
 	public static void InitServer(Socket socket) throws IOException {
-		serverSocket = socket;
 		ServerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		ServerOut = new PrintWriter(socket.getOutputStream(), true);
 	}
 	
 	public static void closeSocket(Socket socket, boolean server) throws IOException {
 		socket.close();
-		/*
-		if (!server) {
-			ClientIn.close();
-			ClientOut.close();
-		} else {
-			ServerIn.close();
-			ServerOut.close();
-		}*/
 	}
 
 	public static int request(Operation operation, int[] integers) throws IOException {

@@ -1,9 +1,10 @@
-package ex2_3;
+package ex2_4;
 
 import java.io.*;
 import java.net.*;
+import ex2_3.Protocol;
 
-public class SingleServer {
+public class MultiServer {
 	
 	private static ServerSocket providerSocket;
 	private static Socket connection = null;
@@ -38,7 +39,7 @@ public class SingleServer {
         });
 		
 		// Server logic
-		SingleServer server = new SingleServer();
+		MultiServer server = new MultiServer();
 		
 		try {
 			providerSocket = new ServerSocket();

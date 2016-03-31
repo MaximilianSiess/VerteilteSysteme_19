@@ -12,7 +12,6 @@ public class SingleClient {
 	private static Operation operator;
 	
 	private static Socket requestSocket;
-	private String result = "";
 	
 	SingleClient () {
 		arguments = new int[2];
@@ -47,11 +46,13 @@ public class SingleClient {
 					operator = Operation.LUCAS;
 					break;
 				case 5:
+					in.close();
 					return false;
 				default:
 					System.out.println("Not a valid input\n\n");
 			}
-			
+			in.close();
+				
 			} catch (InputMismatchException e) {
 				System.out.println("Input is not an Integer!\n\n");
 			}
@@ -68,6 +69,7 @@ public class SingleClient {
 				int input = in.nextInt();
 				arguments[0] = input;
 				done = true;
+				in.close();
 			} catch (InputMismatchException e) {
 				System.out.println("Input is not an Integer!\n\n");
 			}
@@ -86,6 +88,7 @@ public class SingleClient {
 					int input = in.nextInt();
 					arguments[1] = input;
 					done = true;
+					in.close();
 				} catch (InputMismatchException e) {
 					System.out.println("Input is not an Integer!\n\n");
 				}
