@@ -10,23 +10,34 @@ import java.util.StringTokenizer;
 
 public class Protocol {
 	private static final int PORTNUMBER = 1234;
+	private static Socket serverSocket, clientSocket;
 	private static BufferedReader ServerIn, ClientIn;
 	private static PrintWriter ServerOut, ClientOut;
 
 	// TODO Safe closing of in and out
 
 	public static void InitClient(Socket socket) throws IOException {
+		clientSocket = socket;
 		ClientIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		ClientOut = new PrintWriter(socket.getOutputStream(), true);
 	}
 	
 	public static void InitServer(Socket socket) throws IOException {
+		serverSocket = socket;
 		ServerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		ServerOut = new PrintWriter(socket.getOutputStream(), true);
 	}
 	
-	public static void closeSocket(Socket socket) throws IOException {
+	public static void closeSocket(Socket socket, boolean server) throws IOException {
 		socket.close();
+		/*
+		if (!server) {
+			ClientIn.close();
+			ClientOut.close();
+		} else {
+			ServerIn.close();
+			ServerOut.close();
+		}*/
 	}
 
 	public static int request(Operation operation, int[] integers) throws IOException {
@@ -42,6 +53,9 @@ public class Protocol {
 			string.append(" " + integers[0] + " " + integers[1]);
 		}
 
+		// Add extra character because of connection checking with in.read()
+		string.insert(0, "0");
+		
 		// Print operation and integer(s) to output
 		ClientOut.println(string);
 
@@ -57,7 +71,7 @@ public class Protocol {
 		return result;
 	}
 
-	public static void reply() throws IOException {
+	public static boolean reply() throws IOException {
 		String inString = null;
 		StringTokenizer stringTokenizer;
 		String operation;
@@ -67,8 +81,11 @@ public class Protocol {
 		int second;
 
 		// Read InputStream
-		while (inString == null)
+		while (inString == null) {
+			if (ServerIn.read() == -1)
+				return false; // Client has closed, wait for a new connection!
 			inString = ServerIn.readLine();
+		}
 		stringTokenizer = new StringTokenizer(inString, " ");
 		operation = stringTokenizer.nextToken();
 		op = Operation.valueOf(operation);
@@ -95,6 +112,8 @@ public class Protocol {
 		
 		// Send result back to client
 		ServerOut.println(result);
+		
+		return true; // Continue with this socket
 	}
 
 	public static int getPortNumber() {

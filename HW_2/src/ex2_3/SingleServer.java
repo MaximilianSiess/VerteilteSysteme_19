@@ -6,23 +6,21 @@ import java.net.*;
 
 public class SingleServer {
 	
-	private ServerSocket providerSocket;
+	private static ServerSocket providerSocket;
 	private static Socket connection = null;
 	private String request = "";
 	private static boolean running = true;
 	
 	void establishConnection() {
 		try{
-            providerSocket = new ServerSocket(Protocol.getPortNumber(), 10);
-
             System.out.println("Waiting for connection");
             connection = providerSocket.accept();
             
             System.out.println("Connection received from " + connection.getInetAddress().getHostName());
 
         }
-        catch(IOException ioException){
-            ioException.printStackTrace();
+        catch(IOException e){
+            e.printStackTrace();
         }
 	}
 
@@ -37,15 +35,7 @@ public class SingleServer {
             public void run()
             {
                 System.out.println("Shutdown hook activated!");
-                running = false;
-                try {
-                	Protocol.closeSocket(connection);
-                }
-                catch (IOException e) {
-                	System.out.println("Could not close ServerSocket!");
-                	e.printStackTrace();
-                }
-                
+                running = false;           
             }
         });
 		
@@ -53,14 +43,21 @@ public class SingleServer {
 		SingleServer server = new SingleServer();
 		
 		try {
-			server.establishConnection();
-			Protocol.InitServer(connection);
+			providerSocket = new ServerSocket();
+            providerSocket.setReuseAddress(true);
+            providerSocket.bind(new InetSocketAddress(Protocol.getPortNumber()), 10);
 			
-			while(running) {
-				Protocol.reply();
+			while (running) {
+				server.establishConnection();
+				Protocol.InitServer(connection);
+				
+				boolean socketOpen = true;
+				
+				while(socketOpen) {
+					socketOpen = Protocol.reply();
+				}
 			}
-			
-			Protocol.closeSocket(connection);
+			connection.close();
 		} catch (IOException e) {
 			System.out.println("Could not establish a connection!");
 			e.printStackTrace();

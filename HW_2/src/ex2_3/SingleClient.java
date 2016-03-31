@@ -114,7 +114,7 @@ public class SingleClient {
 				System.out.println("Answer: " + result);
 			}
 			
-			Protocol.closeSocket(requestSocket);
+			Protocol.closeSocket(requestSocket, false);
 			
 		} catch (UnknownHostException e) {
 			System.out.println("Could not resolve host!");
