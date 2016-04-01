@@ -3,24 +3,27 @@ package ex2_4;
 import java.io.*;
 import java.net.*;
 import ex2_3.Protocol;
+import sun.tracing.ProviderSkeleton;
 
-public class MultiServer {
+public class MultiServer implements Runnable {
 	
 	private static ServerSocket providerSocket;
 	private static Socket connection = null;
 	private static boolean running = true;
 	
-	void establishConnection() {
-		try{
-            System.out.println("Waiting for connection");
-            connection = providerSocket.accept();
-            
-            System.out.println("Connection received from " + connection.getInetAddress().getHostName());
-
-        }
-        catch(IOException e){
-            e.printStackTrace();
-        }
+	public void run() {
+		try {
+			Protocol.InitServer(connection);
+			
+			boolean socketOpen = true;
+			
+			while(socketOpen) {
+				socketOpen = Protocol.reply();
+			}
+		} catch (IOException e) {
+			System.out.println("Could not handle reply!");
+			e.printStackTrace();
+		}
 	}
 
 	public static void main(String[] args) {
@@ -39,22 +42,16 @@ public class MultiServer {
         });
 		
 		// Server logic
-		MultiServer server = new MultiServer();
-		
 		try {
 			providerSocket = new ServerSocket();
             providerSocket.setReuseAddress(true);
             providerSocket.bind(new InetSocketAddress(Protocol.getPortNumber()), 10);
 			
 			while (running) {
-				server.establishConnection();
-				Protocol.InitServer(connection);
-				
-				boolean socketOpen = true;
-				
-				while(socketOpen) {
-					socketOpen = Protocol.reply();
-				}
+				System.out.println("Waiting for connections...");
+				connection = providerSocket.accept();
+				System.out.println("Connection received from " + connection.getInetAddress().getHostName());
+				new Thread(new MultiServer()).start();
 			}
 			connection.close();
 		} catch (IOException e) {

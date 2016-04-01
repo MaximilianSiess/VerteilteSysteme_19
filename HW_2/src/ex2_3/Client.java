@@ -6,14 +6,14 @@ import java.net.*;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-public class SingleClient {
+public class Client {
 	
 	private static int arguments[];
 	private static Operation operator;
 	
 	private static Socket requestSocket;
 	
-	SingleClient () {
+	Client () {
 		arguments = new int[2];
 	}
 
@@ -96,7 +96,7 @@ public class SingleClient {
 	}
 	
 	public static void main(String[] args) {
-		SingleClient client = new SingleClient();
+		Client client = new Client();
 		
 		System.out.println("*****************CLIENT**************");
 		

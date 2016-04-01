@@ -68,8 +68,10 @@ public class Protocol {
 
 		// Read InputStream
 		while (inString == null) {
-			if (ServerIn.read() == -1)
+			if (ServerIn.read() == -1) {
+				System.out.println("Client has seized connection.");
 				return false; // Client has closed, wait for a new connection!
+			}
 			inString = ServerIn.readLine();
 		}
 		stringTokenizer = new StringTokenizer(inString, " ");
