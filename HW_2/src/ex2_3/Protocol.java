@@ -27,13 +27,13 @@ public class Protocol {
 		socket.close();
 	}
 
-	public static int request(Operation operation, int[] integers) throws IOException {
-		int result = 0;
+	public static String request(Operation operation, int[] integers) throws IOException {
 		boolean reading = false;
-		String readString;
+		String readString = null;
 
 		// Build OutputString
-		StringBuffer string = new StringBuffer(operation.name());
+		StringBuffer string = new StringBuffer("ServiceName ");
+		string.append(operation.name());
 		if (integers.length == 1) {
 			string.append(" " + integers[0]);
 		} else if (integers.length == 2) {
@@ -51,17 +51,16 @@ public class Protocol {
 			readString = ClientIn.readLine();
 			if (readString != null) {
 				reading = true;
-				result = Integer.parseInt(readString);
 			}
 		}
 
-		return result;
+		return readString;
 	}
 
 	public static boolean reply() throws IOException {
 		String inString = null;
 		StringTokenizer stringTokenizer;
-		String operation;
+		String operation, auth;
 		Operation op;
 		int result = 0;
 		int first;
@@ -74,6 +73,14 @@ public class Protocol {
 			inString = ServerIn.readLine();
 		}
 		stringTokenizer = new StringTokenizer(inString, " ");
+		
+		auth = stringTokenizer.nextToken();
+		
+		if (auth.compareTo("ServiceName") != 0) {
+			ServerOut.println("Authentication failure");
+			return false;
+		}
+		
 		operation = stringTokenizer.nextToken();
 		op = Operation.valueOf(operation);
 

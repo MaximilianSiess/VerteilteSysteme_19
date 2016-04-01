@@ -51,7 +51,6 @@ public class SingleClient {
 				default:
 					System.out.println("Not a valid input\n\n");
 			}
-			in.close();
 				
 			} catch (InputMismatchException e) {
 				System.out.println("Input is not an Integer!\n\n");
@@ -69,7 +68,6 @@ public class SingleClient {
 				int input = in.nextInt();
 				arguments[0] = input;
 				done = true;
-				in.close();
 			} catch (InputMismatchException e) {
 				System.out.println("Input is not an Integer!\n\n");
 			}
@@ -88,7 +86,6 @@ public class SingleClient {
 					int input = in.nextInt();
 					arguments[1] = input;
 					done = true;
-					in.close();
 				} catch (InputMismatchException e) {
 					System.out.println("Input is not an Integer!\n\n");
 				}
@@ -113,7 +110,7 @@ public class SingleClient {
 			
 	        // Get input and hand it to protocol, as often as the user wants
 			while (client.inputValues()) {
-				int result = Protocol.request(operator, arguments);
+				String result = Protocol.request(operator, arguments);
 				System.out.println("Answer: " + result);
 			}
 			
