@@ -13,21 +13,21 @@ public class Protocol {
 	private static BufferedReader ServerIn, ClientIn;
 	private static PrintWriter ServerOut, ClientOut;
 
-	public static void InitClient(Socket socket) throws IOException {
+	public void InitClient(Socket socket) throws IOException {
 		ClientIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		ClientOut = new PrintWriter(socket.getOutputStream(), true);
 	}
 	
-	public static void InitServer(Socket socket) throws IOException {
+	public void InitServer(Socket socket) throws IOException {
 		ServerIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		ServerOut = new PrintWriter(socket.getOutputStream(), true);
 	}
 	
-	public static void closeSocket(Socket socket, boolean server) throws IOException {
+	public void closeSocket(Socket socket, boolean server) throws IOException {
 		socket.close();
 	}
 
-	public static String request(Operation operation, int[] integers) throws IOException {
+	public String request(Operation operation, int[] integers) throws IOException {
 		boolean reading = false;
 		String readString = null;
 
@@ -57,7 +57,7 @@ public class Protocol {
 		return readString;
 	}
 
-	public static boolean reply() throws IOException {
+	public boolean reply() throws IOException {
 		String inString = null;
 		StringTokenizer stringTokenizer;
 		String operation, auth;

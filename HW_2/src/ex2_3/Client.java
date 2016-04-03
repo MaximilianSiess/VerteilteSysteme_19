@@ -98,6 +98,7 @@ public class Client {
 
 	public static void main(String[] args) {
 		Client client = new Client();
+		Protocol protocol = new Protocol();
 
 		System.out.println("*****************CLIENT**************");
 
@@ -107,15 +108,15 @@ public class Client {
 			requestSocket = new Socket("localhost", Protocol.getPortNumber());
 			System.out.println("Connected to localhost in port " + Protocol.getPortNumber());
 
-			Protocol.InitClient(requestSocket);
+			protocol.InitClient(requestSocket);
 
 			// Get input and hand it to protocol, as often as the user wants
 			while (client.inputValues()) {
-				String result = Protocol.request(operator, arguments);
+				String result = protocol.request(operator, arguments);
 				System.out.println("Answer: " + result);
 			}
 
-			Protocol.closeSocket(requestSocket, false);
+			protocol.closeSocket(requestSocket, false);
 
 		} catch (UnknownHostException e) {
 			System.out.println("Could not resolve host!");

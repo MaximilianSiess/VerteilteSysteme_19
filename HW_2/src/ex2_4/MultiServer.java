@@ -7,28 +7,11 @@ import java.util.concurrent.Executors;
 
 import ex2_3.Protocol;
 
-public class MultiServer implements Runnable {
+public class MultiServer{
 
     //TODO: ExecutorService only works for one thread at a time...
 
 	private static ServerSocket providerSocket;
-	private static Socket connection = null;
-
-	public void run() {
-		try {
-			Protocol.InitServer(connection);
-
-			boolean socketOpen = true;
-
-			// Go for as long as the client is not closed
-			while(socketOpen) {
-				socketOpen = Protocol.reply();
-			}
-		} catch (IOException e) {
-			System.out.println("\nThread was interrupted.");
-			e.printStackTrace();
-		}
-	}
 
 	public static void main(String[] args) {
 		ExecutorService executor = Executors.newCachedThreadPool();
@@ -36,6 +19,7 @@ public class MultiServer implements Runnable {
 		// Add a hook for shutdown exception handling
 		// NOTE: Hook does not work inside Eclipse
         // must send a TERM signal with kill
+		/*
 		Runtime.getRuntime().addShutdownHook(new Thread()
         {
             @Override
@@ -59,6 +43,7 @@ public class MultiServer implements Runnable {
                 }
             }
         });
+        */
 
 		// Server logic
 		try {
@@ -69,10 +54,10 @@ public class MultiServer implements Runnable {
 			while (true) {
 				System.out.println("Waiting for connections...");
 
-				connection = providerSocket.accept();
-				System.out.println("Connection received from " + connection.getInetAddress().getHostName());
+				HandleRequest newRequest = new HandleRequest();
+				newRequest.RequestHandlerThread(providerSocket.accept());
 
-				executor.execute(new MultiServer());
+				executor.execute(newRequest);
 			}
 		} catch (IOException e) {
 			System.out.println("Could not establish a connection!");

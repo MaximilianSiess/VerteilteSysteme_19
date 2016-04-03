@@ -36,6 +36,7 @@ public class SingleServer {
 
 		// Server logic
 		SingleServer server = new SingleServer();
+		Protocol protocol = new Protocol();
 
 		try {
 			providerSocket = new ServerSocket();
@@ -44,12 +45,12 @@ public class SingleServer {
 
 			while (running) {
 				server.establishConnection();
-				Protocol.InitServer(connection);
+				protocol.InitServer(connection);
 
 				boolean socketOpen = true;
 
 				while (socketOpen) {
-					socketOpen = Protocol.reply();
+					socketOpen = protocol.reply();
 				}
 			}
 			connection.close();
