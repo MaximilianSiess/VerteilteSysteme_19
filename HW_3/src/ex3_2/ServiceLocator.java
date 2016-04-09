@@ -4,77 +4,38 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketException;
+import java.net.UnknownHostException;
 
-public class ServiceLocator implements Runnable {
+public class ServiceLocator {
+	private final int port;
+	private final int timeout;
 
-	DatagramSocket socket;
-	DatagramPacket packet;
-	int portnumber;
-	
-	public ServiceLocator(int port) {
-		/*
-		try {
-			socket = new DatagramSocket();
-		} catch (SocketException e) {
-			System.out.println("Could not open socket:");
-			e.printStackTrace();
-		}*/
-		
-		portnumber = port;
+	public ServiceLocator(int port, int timeout) {
+		this.port = port;
+		this.timeout = timeout;
 	}
-	
-	public void run() {
+
+	public InetAddress locate() throws UnknownHostException {
 		try {
-			//socket.bind(new InetSocketAddress(portnumber));
-			//socket.connect(InetAddress.getByName("0.0.0.0"), portnumber);
-			socket = new DatagramSocket(portnumber, InetAddress.getByName("0.0.0.0"));
-			socket.setBroadcast(true);
-			
-			boolean running = true;
-			
-			while (running) {
-				System.out.println(getClass().getName() + ">>> Waiting for broadcast packets...");
-				packet= new DatagramPacket (new byte[15000], 0);
-				socket.receive(packet);
-				
-				//Packet received
-				System.out.println(getClass().getName() + ">>> Discovery packet received from: " + packet.getAddress().getHostAddress());
-				System.out.println(getClass().getName() + ">>> Packet received; data: " + new String(packet.getData()));
+			// Create ping
+			byte[] content = "Ping".getBytes();
+			DatagramSocket socket = new DatagramSocket();
+			// Broadcast ping
+			byte adr = (byte) 255;
+			byte[] address = { adr, adr, adr, adr };
+			InetAddress internetAdress = InetAddress.getByAddress(address);
+			DatagramPacket packet = new DatagramPacket(content, content.length, internetAdress, port);
+			// Send ping
+			socket.send(packet);
+			// Wait for response until timeout
+			socket.setSoTimeout(timeout);
+			socket.receive(packet);
 
-				//See if the packet holds the right command (message)
-		        String message = new String(packet.getData()).trim();
-		        if (message.equals("DISCOVER_FUIFSERVER_REQUEST")) {
-		        	byte[] sendData = "DISCOVER_FUIFSERVER_RESPONSE".getBytes();
+			return packet.getAddress();
 
-			        //Send a response
-			        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, packet.getAddress(), packet.getPort());
-			        socket.send(sendPacket);
-		
-			        System.out.println(getClass().getName() + ">>>Sent packet to: " + sendPacket.getAddress().getHostAddress());
-		        }
-			}
-			
-			
-            socket.send (packet);
-            packet.setLength(100);
-            socket.receive (packet);
-            socket.close ();
-            byte[] data = packet.getData ();
-            String time=new String(data);
-            System.out.println(time);
-		} catch (SocketException e) {
-			System.out.println("Could not open socket:");
-			e.printStackTrace();
-		} catch (IOException e) {
-			System.out.println("Could not read from connection:");
-			e.printStackTrace();
-		/*} catch (CloseException e) {	// Custom exception
-			System.out.println("Shutting down..."); */
-		} finally {
-			socket.close();
+		} catch (final IOException e) {
+			throw new UnknownHostException();
 		}
 	}
-	
+
 }

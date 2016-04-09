@@ -6,21 +6,21 @@ import java.net.UnknownHostException;
 public class TestingClass {
 
 	public static void main(String[] args) {
-		ServiceAnnouncer announcer;
-		ServiceLocator locator;
+		ExampleServiceAnnouncer announcer;
+		ExampleServiceLocator locator;
 		int portnumber = 8345;
 		
 		try {
 			
 			System.out.println("Creating Server...");
-			locator = new ServiceLocator(portnumber);
+			locator = new ExampleServiceLocator(portnumber);
 			
 			new Thread(locator).start();
 			
 			Thread.sleep(1000);
 			
 			System.out.println("Creating Client...");
-			announcer = new ServiceAnnouncer(portnumber);
+			announcer = new ExampleServiceAnnouncer(portnumber);
 			
 			new Thread(announcer).start();
 		} catch (InterruptedException e) {
