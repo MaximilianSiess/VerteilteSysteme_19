@@ -27,7 +27,7 @@ public class Client extends Thread {
 		System.out.println("Adress: " + adress);
 		while (running) {
 			try {
-				sleep(1000);
+				sleep(500);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -8,12 +8,14 @@ public class Test {
 		Client client1 = new Client(new ServiceLocator(1234, 250), 0);
 		Client client2 = new Client(new ServiceLocator(1234, 250), 1);
 		server.start();
+		ServerShutdown shutdown = new ServerShutdown(server);
+		shutdown.start();
 
 		// Start some clients
 		client1.start();
 		client2.start();
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

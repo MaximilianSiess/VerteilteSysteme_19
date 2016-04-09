@@ -1,10 +1,12 @@
 package ex3_2;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 public class ServiceAnnouncer extends Thread {
 
@@ -24,6 +26,8 @@ public class ServiceAnnouncer extends Thread {
 
 			// Open the UDP port
 			socket = new DatagramSocket(port);
+			// Server interrupts listing every second
+			socket.setSoTimeout(1000);
 
 			while (running) {
 				// Waiting for packages of clients
@@ -46,8 +50,9 @@ public class ServiceAnnouncer extends Thread {
 				} else {
 					System.out.println("Invalid message: " + data);
 				}
-
 			}
+		} catch (SocketTimeoutException e) {
+			// Nothing must be done, server starts listing again
 		} catch (SocketException e) {
 			System.out.println("Port is already in use!");
 			e.printStackTrace();
@@ -55,11 +60,13 @@ public class ServiceAnnouncer extends Thread {
 			System.out.println("Communication error!");
 			e.printStackTrace();
 		} finally {
+		}
+		if (socket != null) {
 			socket.close();
 		}
 	}
 
-	public void stopServiceAnnouncement() {
+	public void stopServiceAnnouncer() {
 		running = false;
 	}
 
