@@ -14,6 +14,19 @@ public class ServerShutdown extends Thread {
 
 	@Override
 	public void run() {
+		
+		// Shutdown hook to catch ctrl+C TERM signal
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run(){
+				System.out.println("Server: TERM Signal recieved.");
+				while (!closing) {
+					server.stopServiceAnnouncer();
+					System.out.println("Start Closing");
+					closing = true;
+				}
+			}
+		});
+		
 		System.out.println("Type 1 to shutdown server.");
 		int i = 0;
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));

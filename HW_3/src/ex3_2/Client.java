@@ -34,6 +34,7 @@ public class Client extends Thread {
 			}
 			System.out.println("Client" + clientID + " :Still alive!");
 		}
+		System.out.println("Client" + clientID + " stopped.");
 	}
 
 	public void stopClient() {
