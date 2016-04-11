@@ -1,5 +1,6 @@
 package ex3_2;
 
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -17,6 +18,13 @@ public class Client extends Thread {
 
 	@Override
 	public void run() {
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				System.out.println("Shutdown hook activated!");
+				running = false;
+			}
+		});
 		System.out.println("CLient" + clientID + " is started.");
 		try {
 			adress = locator.locate();

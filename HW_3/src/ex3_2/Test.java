@@ -5,6 +5,16 @@ public class Test {
 	public static void main(String[] args) {
 
 		final ServiceAnnouncer server = new ServiceAnnouncer(1234);
+		// Hook does not work inside Eclipse
+
+		// Add a hook for shutdown exception handling
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				System.out.println("Shutdown hook activated!");
+				server.stopServiceAnnouncer();
+			}
+		});
 		Client client1 = new Client(new ServiceLocator(1234, 250), 0);
 		Client client2 = new Client(new ServiceLocator(1234, 250), 1);
 		server.start();
