@@ -7,15 +7,18 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class ServiceLocator {
-	private final int port;
+	private final int UDPport;
 	private final int timeout;
 
+	InetAddress serveraddress;
+	int serverTCPport;
+	
 	public ServiceLocator(int port, int timeout) {
-		this.port = port;
+		this.UDPport = port;
 		this.timeout = timeout;
 	}
 
-	public InetAddress locate() throws UnknownHostException {
+	public void locate() throws UnknownHostException {
 		try {
 			// Create ping
 			byte[] content = "Ping".getBytes();
@@ -24,18 +27,29 @@ public class ServiceLocator {
 			byte adr = (byte) 255;
 			byte[] address = { adr, adr, adr, adr };
 			InetAddress internetAdress = InetAddress.getByAddress(address);
-			DatagramPacket packet = new DatagramPacket(content, content.length, internetAdress, port);
+			DatagramPacket packet = new DatagramPacket(content, content.length, internetAdress, UDPport);
 			// Send ping
 			socket.send(packet);
 			// Wait for response until timeout
 			socket.setSoTimeout(timeout);
 			socket.receive(packet);
-
-			return packet.getAddress();
+			
+			socket.close();
+			
+			serveraddress = packet.getAddress();
+			serverTCPport = packet.getPort();
 
 		} catch (final IOException e) {
 			throw new UnknownHostException();
 		}
+	}
+	
+	public int getPort() {
+		return serverTCPport;
+	}
+	
+	public InetAddress getAddress() {
+		return serveraddress;
 	}
 
 }
