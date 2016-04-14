@@ -10,7 +10,7 @@ public class Node {
 	private int n;
 	private InetAddress adress;
 	private Node[] table;
-	private Socket socket;
+	private Socket socket, sendSocket;
 	private ServerSocket serverSocket;
 
 	public Node(int port, InetAddress adress, int n) {
@@ -19,7 +19,9 @@ public class Node {
 		this.adress = adress;
 		this.table = new Node[n];
 		try {
-			serverSocket = new ServerSocket(port);
+			serverSocket = new ServerSocket();
+			serverSocket.setReuseAddress(true);
+			sendSocket = new Socket();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -33,7 +35,9 @@ public class Node {
 		this.table = new Node[n];
 		table[0] = node;
 		try {
-			serverSocket = new ServerSocket(port);
+			serverSocket = new ServerSocket();
+			serverSocket.setReuseAddress(true);
+			sendSocket = new Socket();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -66,6 +70,10 @@ public class Node {
 
 	public void setTable(Node[] table) {
 		this.table = table;
+	}
+
+	public Socket getSendSocket() {
+		return sendSocket;
 	}
 
 }

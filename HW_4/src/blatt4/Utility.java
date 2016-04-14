@@ -22,7 +22,8 @@ public class Utility {
 	private Socket connect(Node self, Node other) {
 		Socket socket = null;
 		try {
-			self.getSocket().bind(new InetSocketAddress(other.getAdress(), other.getPort()));
+			self.getSendSocket().bind(new InetSocketAddress(self.getPort()));
+			self.getSendSocket().bind(new InetSocketAddress(other.getAdress(), other.getPort()));
 			socket = other.getServerSocket().accept();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -33,7 +34,7 @@ public class Utility {
 
 	public void disconnect(Node self) {
 		try {
-			self.getSocket().close();
+			self.getSendSocket().close();
 			// TODO Serverseite
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -44,11 +45,15 @@ public class Utility {
 	public void exchange(Node[] table, Node self) {
 		// TODO random
 		Node other = table[0];
-		exchangeHelper(table, self, other);
-		exchangeHelper(other.getTable(), other, self);
+		if (other != null) {
+			exchangeHelper(table, self, other);
+			exchangeHelper(other.getTable(), other, self);
+			disconnect(self);
+			disconnect(other);
+		}
 	}
 
-	public void exchangeHelper(Node[] table, Node self, Node other) {
+	private void exchangeHelper(Node[] table, Node self, Node other) {
 
 		Socket socket = connect(self, other);
 		try {
