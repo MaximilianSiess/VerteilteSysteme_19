@@ -1,7 +1,6 @@
 package ex3_2;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -11,12 +10,13 @@ import java.net.SocketTimeoutException;
 public class ServiceAnnouncer extends Thread {
 
 	private DatagramSocket socket;
-	private final int port;
+	private final int UDPport, TCPport;
 	private final byte[] buffer = new byte[12];
 	private boolean running = true;
 
-	public ServiceAnnouncer(final int port) {
-		this.port = port;
+	public ServiceAnnouncer(final int port, final int tcpport) {
+		UDPport = port;
+		TCPport = tcpport;
 	}
 
 	@Override
@@ -25,7 +25,7 @@ public class ServiceAnnouncer extends Thread {
 		try {
 
 			// Open the UDP port
-			socket = new DatagramSocket(port);
+			socket = new DatagramSocket(UDPport);
 			// Server interrupts listing every second
 			socket.setSoTimeout(1000);
 
@@ -45,7 +45,7 @@ public class ServiceAnnouncer extends Thread {
 
 					// Send a response message to the ServiceLocator
 					final DatagramPacket response = new DatagramPacket(InetAddress.getLocalHost().getAddress(),
-							InetAddress.getLocalHost().getAddress().length, packet.getAddress(), packet.getPort());
+							InetAddress.getLocalHost().getAddress().length, socket.getInetAddress(), TCPport);
 					socket.send(response);
 				} else {
 					System.out.println("Invalid message: " + data);
@@ -68,6 +68,10 @@ public class ServiceAnnouncer extends Thread {
 
 	public void stopServiceAnnouncer() {
 		running = false;
+	}
+	
+	public int getPort() {
+		return TCPport;
 	}
 
 }

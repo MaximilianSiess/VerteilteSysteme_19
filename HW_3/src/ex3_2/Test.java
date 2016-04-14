@@ -4,28 +4,27 @@ public class Test {
 
 	public static void main(String[] args) {
 
-		final ServiceAnnouncer server = new ServiceAnnouncer(1234);
-		// Hook does not work inside Eclipse
-
-		// Add a hook for shutdown exception handling
+		//final ServiceAnnouncer server = new ServiceAnnouncer(1234);
+		ServiceAnnouncer serverAnnouncer = new ServiceAnnouncer(1234, 4321);
+		final Server server = new Server(serverAnnouncer, 0);
+		
+		// Shutdown hook to catch ctrl+C TERM signal
 		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				System.out.println("Shutdown hook activated!");
-				server.stopServiceAnnouncer();
+			public void run(){
+				System.out.println("Client: TERM Signal recieved.");
+				server.stopServer();
 			}
 		});
+		
 		Client client1 = new Client(new ServiceLocator(1234, 250), 0);
 		Client client2 = new Client(new ServiceLocator(1234, 250), 1);
 		server.start();
-		ServerShutdown shutdown = new ServerShutdown(server);
-		shutdown.start();
 
 		// Start some clients
 		client1.start();
 		client2.start();
 		try {
-			Thread.sleep(1000);
+			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

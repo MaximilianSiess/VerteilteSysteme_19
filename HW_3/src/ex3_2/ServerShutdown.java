@@ -5,10 +5,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class ServerShutdown extends Thread {
-	private ServiceAnnouncer server;
+	private Server server;
 	private boolean closing = false;
 
-	public ServerShutdown(ServiceAnnouncer server) {
+	public ServerShutdown(Server server) {
 		this.server = server;
 	}
 
@@ -20,7 +20,7 @@ public class ServerShutdown extends Thread {
 			public void run(){
 				System.out.println("Server: TERM Signal recieved.");
 				while (!closing) {
-					server.stopServiceAnnouncer();
+					server.stopServer();
 					System.out.println("Start Closing");
 					closing = true;
 				}
@@ -41,7 +41,7 @@ public class ServerShutdown extends Thread {
 				e.printStackTrace();
 			}
 			if (i == 1) {
-				server.stopServiceAnnouncer();
+				server.stopServer();
 				System.out.println("Start Closing");
 				closing = true;
 			}
