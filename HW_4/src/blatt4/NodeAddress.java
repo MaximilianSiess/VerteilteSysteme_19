@@ -8,11 +8,14 @@ public class NodeAddress implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private InetAddress address;
 	private int port;
+	private String name;
+	private boolean searchQuest = false;
 
-	public NodeAddress(InetAddress address, int port) {
+	public NodeAddress(InetAddress address, int port, String name) {
 		super();
 		this.address = address;
 		this.port = port;
+		this.name = name;
 	}
 
 	@Override
@@ -40,6 +43,18 @@ public class NodeAddress implements Serializable {
 
 	public int getPort() {
 		return port;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public void makeSearchNodeAddress() {
+		searchQuest = true;
+	}
+	
+	public boolean getSearchQuest() {
+		return searchQuest;
 	}
 
 	@Override

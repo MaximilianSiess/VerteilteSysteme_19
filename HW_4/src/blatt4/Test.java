@@ -1,5 +1,6 @@
 package blatt4;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
@@ -14,10 +15,10 @@ public class Test {
 
 		try {
 			address = InetAddress.getLocalHost();
-			nodes.add(new Node(2000, address, n));
+			nodes.add(new Node("Node0", 2000, address, n));
 			System.out.println("Node 0 created!");
 			for (int i = 1; i < number; i++) {
-				nodes.add(new Node(2000 + i, InetAddress.getLocalHost(), n, nodes.get(i - 1)));
+				nodes.add(new Node("Node" + i, 2000 + i, InetAddress.getLocalHost(), n, nodes.get(i - 1)));
 				System.out.println("Node " + i + " created!");
 			}
 
@@ -25,27 +26,34 @@ public class Test {
 				node.start();
 			}
 			for (int i = number; i < number + n; i++) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				Utility.addNode(new Node(2000 + i, InetAddress.getLocalHost(), n, nodes.get(0)));
+				Utility.sleep(1000);
+				Node newnode = new Node("Node" + i, 2000 + i, InetAddress.getLocalHost(), n, nodes.get(0));
+				nodes.add(newnode);
+				Utility.addNode(newnode);
 				System.out.println("Node " + i + " added!");
 			}
-			for (int i = 0; i < n; i++) {
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				Utility.removeNode(nodes.get(i * 3));
+			
+			Utility.sleep(1000);
+			//Utility.findNode(nodes.get(0), "Node6");
+			//Utility.findNode(nodes.get(0), "IDon'tExist");
+			
+			System.out.println("Type something to close all " + nodes.size() + " nodes.");
+			try {
+				System.in.read();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			for (int i = 0; i < nodes.size(); i++) {
+				Utility.removeNode(nodes.get(i));
 				System.out.println("Node " + i + " removed!");
+				Utility.sleep(100);
 			}
 
 		} catch (UnknownHostException e1) {
 			e1.printStackTrace();
 		}
 
+		System.out.println("Done! Quitting...");
 	}
 }
