@@ -1,7 +1,6 @@
 package blatt4;
 
 import java.util.LinkedList;
-import java.util.List;
 
 public abstract class Utility {
 
@@ -15,8 +14,7 @@ public abstract class Utility {
 
 	public static void findNode(Node first, String name) {
 		NodeAddress searchitem = new NodeAddress(null, 0, name);
-		searchitem.makeSearchNodeAddress();
-		List<NodeAddress> trace = new LinkedList<NodeAddress>();
+		LinkedList<NodeAddress> trace = new LinkedList<NodeAddress>();
 		trace.add(searchitem);
 		trace.add(first.getNodeAddress());
 		NodeAddress result = first.search(trace);
@@ -26,6 +24,14 @@ public abstract class Utility {
 		} else {
 			System.out.println(("Could not find " + name + "..."));
 		}
+	}
+
+	public static void sendFloodMessage(Node first, String text) {
+		LinkedList<NodeAddress> trace = new LinkedList<NodeAddress>();
+		trace.add(first.getNodeAddress());
+		Message msg = new Message(text);
+		System.out.println("Try to flood: " + text);
+		first.flood(msg);
 	}
 
 	public static void sleep(int miliseconds) {

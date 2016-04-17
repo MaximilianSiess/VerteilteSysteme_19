@@ -9,13 +9,22 @@ public class NodeAddress implements Serializable {
 	private InetAddress address;
 	private int port;
 	private String name;
-	private boolean searchQuest = false;
 
 	public NodeAddress(InetAddress address, int port, String name) {
 		super();
 		this.address = address;
 		this.port = port;
 		this.name = name;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((address == null) ? 0 : address.hashCode());
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + port;
+		return result;
 	}
 
 	@Override
@@ -32,6 +41,11 @@ public class NodeAddress implements Serializable {
 				return false;
 		} else if (!address.equals(other.address))
 			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
 		if (port != other.port)
 			return false;
 		return true;
@@ -44,22 +58,9 @@ public class NodeAddress implements Serializable {
 	public int getPort() {
 		return port;
 	}
-	
+
 	public String getName() {
 		return name;
-	}
-	
-	public void makeSearchNodeAddress() {
-		searchQuest = true;
-	}
-	
-	public boolean getSearchQuest() {
-		return searchQuest;
-	}
-
-	@Override
-	public String toString() {
-		return "" + port;
 	}
 
 }

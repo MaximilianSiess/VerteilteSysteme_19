@@ -21,10 +21,11 @@ public class Node extends Thread {
 	private final int n;
 	private final String name;
 	private final NodeAddress ownAddress;
-	private List<NodeAddress> table;
+	private LinkedList<NodeAddress> table;
 	private ServerSocket serverSocket;
 	private boolean isActive = true;
 	private Map<NodeAddress, List<String>> requests = new HashMap<NodeAddress, List<String>>();
+	private Map<NodeAddress, List<String>> inbox = new HashMap<NodeAddress, List<String>>();
 
 	public Node(String name, int port, InetAddress address, int n) {
 		this.n = n;
@@ -56,10 +57,9 @@ public class Node extends Thread {
 	private void mergeTables(LinkedList<NodeAddress> exchangeTable) {
 		printTable(exchangeTable, false);
 		synchronized (table) {
-			for (int i = 0; i < exchangeTable.size(); i++) {
-				NodeAddress newNode = exchangeTable.get(i);
-				if (!(newNode.equals(ownAddress) || table.contains(newNode))) {
-					table.add(exchangeTable.get(i));
+			for (NodeAddress nodeAddress : exchangeTable) {
+				if (!(nodeAddress.equals(ownAddress) || table.contains(nodeAddress))) {
+					table.add(nodeAddress);
 				}
 			}
 			while (table.size() > n) {
@@ -81,10 +81,7 @@ public class Node extends Thread {
 					Socket socket = null;
 
 					try {
-						System.out.println(name + " before accept");
 						socket = serverSocket.accept();
-						System.out.println(name + " after accept");
-
 						executor.submit(new RequestHandler(socket));
 					} catch (SocketException e) {
 						e.printStackTrace();
@@ -98,19 +95,19 @@ public class Node extends Thread {
 		while (!isInterrupted()) {
 			synchronized (table) {
 				if (!table.isEmpty()) {
+					// pick random node from table for exchange
 					NodeAddress other = table.get((int) (Math.random() * (table.size() - 1)));
 					exchangeTables(other);
 				}
 			}
 			try {
-				sleep(1000);
+				sleep(5000);
 			} catch (InterruptedException e) {
 				isActive = false;
 				// stop Node
 				try {
 					executor.shutdown();
 					executor.awaitTermination(1, TimeUnit.SECONDS);
-					// serverSocket.close();
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
@@ -128,9 +125,10 @@ public class Node extends Thread {
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 			synchronized (table) {
 				table.add(ownAddress);
-				out.writeObject(table);
+				out.writeObject(new Message(MessageType.EXCHANGE, table));
 				System.out.println(name + " sent table to " + other.getName());
-				LinkedList<NodeAddress> exchangeTable = (LinkedList<NodeAddress>) in.readObject();
+				Message answer = (Message) in.readObject();
+				LinkedList<NodeAddress> exchangeTable = answer.getSubject();
 				System.out.println(name + " received table from " + other.getName());
 				table.remove(ownAddress);
 				mergeTables(exchangeTable);
@@ -142,6 +140,7 @@ public class Node extends Thread {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} finally {
+			table.remove(ownAddress);
 			if (socket != null) {
 				try {
 					socket.close();
@@ -173,7 +172,7 @@ public class Node extends Thread {
 		return ownAddress;
 	}
 
-	public NodeAddress search(List<NodeAddress> trace) {
+	public NodeAddress search(LinkedList<NodeAddress> trace) {
 		String destination = trace.get(0).getName();
 		NodeAddress initiator = trace.get(1);
 
@@ -234,7 +233,7 @@ public class Node extends Thread {
 		return null;
 	}
 
-	private NodeAddress sendSearchRequest(NodeAddress other, List<NodeAddress> trace) {
+	private NodeAddress sendSearchRequest(NodeAddress other, LinkedList<NodeAddress> trace) {
 		Socket socket = null;
 		NodeAddress result = null;
 		try {
@@ -243,8 +242,7 @@ public class Node extends Thread {
 			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 			System.out.println(name + " asks " + other.getName());
-			out.writeObject(trace);
-			out.flush();
+			out.writeObject(new Message(MessageType.SEARCH, trace));
 			result = (NodeAddress) in.readObject();
 		} catch (SocketTimeoutException e) {
 			removeUnavailable(other);
@@ -267,6 +265,67 @@ public class Node extends Thread {
 		}
 
 		return result;
+	}
+
+	public void flood(Message msg) {
+		String text = msg.getText();
+		LinkedList<NodeAddress> trace = msg.getSubject();
+		NodeAddress initiator;
+		if (trace.size() > 0) {
+			initiator = trace.get(0);
+		} else {
+			initiator = ownAddress;
+		}
+
+		if (!trace.contains(ownAddress)) {
+
+			// Add new msg if not already in inbox
+			synchronized (inbox) {
+				// Set<NodeAddress> keys = inbox.keySet();
+				if (inbox.containsKey(initiator)) {
+					List<String> msgs = inbox.get(initiator);
+					if (msgs.contains(text)) {
+						// do nothing
+						return;
+					} else {
+						// add new request
+						msgs.add(text);
+						inbox.replace(initiator, msgs);
+					}
+				} else {
+					List<String> msgs = new LinkedList<String>();
+					msgs.add(text);
+					inbox.put(initiator, msgs);
+				}
+			}
+			System.out.println(name + " got: " + text);
+
+			// Copy table (to avoid later synchronization and deadlock)
+			List<NodeAddress> ownTable = new LinkedList<NodeAddress>();
+			synchronized (table) {
+				ownTable.addAll(table);
+			}
+			trace.add(ownAddress);
+			msg.setSubject(trace);
+
+			for (NodeAddress nodeAddress : ownTable) {
+				if (!trace.contains(nodeAddress)) {
+					Socket socket = null;
+					try {
+						socket = new Socket(nodeAddress.getAddress(), nodeAddress.getPort());
+						socket.setSoTimeout(1500);
+						ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+						out.writeObject(msg);
+					} catch (SocketTimeoutException e) {
+						removeUnavailable(nodeAddress);
+					} catch (SocketException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
 	}
 
 	private void removeUnavailable(NodeAddress other) {
@@ -292,23 +351,32 @@ public class Node extends Thread {
 				in = new ObjectInputStream(socket.getInputStream());
 				out = new ObjectOutputStream(socket.getOutputStream());
 				// receive message from connection
-				LinkedList<NodeAddress> nodeAddresses = (LinkedList<NodeAddress>) in.readObject();
-
-				// Check if it is a search request
-				if (nodeAddresses != null && nodeAddresses.get(0).getSearchQuest()) {
-					NodeAddress searchResult = search(nodeAddresses);
+				Message msg = (Message) in.readObject();
+				if (msg.getType() == MessageType.EXCHANGE) {
+					LinkedList<NodeAddress> exchangeTable = msg.getSubject();
+					synchronized (table) {
+						out.writeObject(new Message(MessageType.EXCHANGE, table));
+						mergeTables(exchangeTable);
+					}
+				} else if (msg.getType() == MessageType.SEARCH) {
+					LinkedList<NodeAddress> trace = msg.getSubject();
+					NodeAddress searchResult = search(trace);
 					if (searchResult == null) {
-						System.out.println(name + " got a search request, but " + nodeAddresses.get(0).getName()
-								+ " was not found!");
-					} else {
 						System.out.println(
-								name + " got a search request, and " + nodeAddresses.get(0).getName() + " was found!");
+								name + " got a search request, but " + trace.get(0).getName() + " was not found!");
+					} else {
+						System.out
+								.println(name + " got a search request, and " + trace.get(0).getName() + " was found!");
 					}
 					out.writeObject(searchResult);
-				} else { // It is a table exchange request
-					synchronized (table) {
-						out.writeObject(table);
-						mergeTables(nodeAddresses);
+				} else {// type INFO
+					flood(msg);
+					if (socket != null) {
+						try {
+							socket.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			} catch (SocketTimeoutException e) {
@@ -322,4 +390,5 @@ public class Node extends Thread {
 			}
 		}
 	}
+
 }

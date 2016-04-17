@@ -8,7 +8,7 @@ import java.util.List;
 public class Test {
 	public static void main(String[] args) {
 		int n = 3;
-		int number = 4;
+		int number = 3 * n;
 		InetAddress address;
 		String name;
 		List<Node> nodes = new LinkedList<Node>();
@@ -45,25 +45,20 @@ public class Test {
 
 			int rand = (int) (Math.random() * nodes.size());
 			Utility.removeNode(nodes.get(rand));
-			System.out.println("Node " + rand + " removed!");
+			nodes.remove(rand);
+			System.out.println("Node" + rand + " removed!");
 			Utility.sleep(100);
 			rand = (int) (Math.random() * nodes.size());
 			Utility.removeNode(nodes.get(rand));
-			System.out.println("Node " + rand + " removed!");
+			nodes.remove(rand);
+			System.out.println("Node" + rand + " removed!");
+
+			// flooding (wait until the network is better connected)
+			Utility.sleep(15000);
+			Utility.sendFloodMessage(nodes.get(0), "To all: Beer for free!");
 
 		} catch (UnknownHostException e1) {
 			e1.printStackTrace();
 		}
-
-		for (int i = 0; i < nodes.size(); i++) {
-			try {
-				nodes.get(i).join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			System.out.println("Node " + i + " joined!");
-		}
-		System.out.println("Done! Quitting...");
 	}
 }
