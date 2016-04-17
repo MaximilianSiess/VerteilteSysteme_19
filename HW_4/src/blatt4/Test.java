@@ -30,7 +30,7 @@ public class Test {
 
 			// add some nodes
 			for (int i = number; i < number + n; i++) {
-				Utility.sleep(1000);
+				Utility.sleep(100);
 				name = "Node" + i;
 				Node newnode = new Node(name, 2000 + i, address, n, nodes.get(0));
 				nodes.add(newnode);
