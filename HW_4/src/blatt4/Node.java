@@ -7,12 +7,14 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Node extends Thread {
 
@@ -103,23 +105,25 @@ public class Node extends Thread {
 			try {
 				sleep(1000);
 			} catch (InterruptedException e) {
+				isActive = false;
 				// stop Node
 				try {
-					// stops requestHandler
-					serverSocket.close();
-				} catch (IOException e1) {
+					executor.shutdown();
+					executor.awaitTermination(1, TimeUnit.SECONDS);
+					// serverSocket.close();
+				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
 				interrupt();
 			}
 		}
-		isActive = false;
 	}
 
 	private void exchangeTables(NodeAddress other) {
 		Socket socket = null;
 		try {
 			socket = new Socket(other.getAddress(), other.getPort());
+			socket.setSoTimeout(1500);
 			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 			synchronized (table) {
@@ -131,7 +135,8 @@ public class Node extends Thread {
 				table.remove(ownAddress);
 				mergeTables(exchangeTable);
 			}
-
+		} catch (SocketTimeoutException e) {
+			removeUnavailable(other);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -234,12 +239,15 @@ public class Node extends Thread {
 		NodeAddress result = null;
 		try {
 			socket = new Socket(other.getAddress(), other.getPort());
+			socket.setSoTimeout(1500);
 			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 			System.out.println(name + " asks " + other.getName());
 			out.writeObject(trace);
 			out.flush();
 			result = (NodeAddress) in.readObject();
+		} catch (SocketTimeoutException e) {
+			removeUnavailable(other);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -261,6 +269,13 @@ public class Node extends Thread {
 		return result;
 	}
 
+	private void removeUnavailable(NodeAddress other) {
+		synchronized (table) {
+			System.out.println(name + ": " + other.getName() + " was not available!");
+			table.remove(other);
+		}
+	}
+
 	private class RequestHandler extends Thread {
 		private Socket socket;
 
@@ -276,7 +291,6 @@ public class Node extends Thread {
 			try {
 				in = new ObjectInputStream(socket.getInputStream());
 				out = new ObjectOutputStream(socket.getOutputStream());
-
 				// receive message from connection
 				LinkedList<NodeAddress> nodeAddresses = (LinkedList<NodeAddress>) in.readObject();
 
@@ -297,6 +311,8 @@ public class Node extends Thread {
 						mergeTables(nodeAddresses);
 					}
 				}
+			} catch (SocketTimeoutException e) {
+				// other node gave already up
 			} catch (SocketException e) {
 				System.out.println(name + ": Socket closed!");
 			} catch (IOException e) {

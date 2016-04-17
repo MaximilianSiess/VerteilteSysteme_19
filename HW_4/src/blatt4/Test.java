@@ -43,15 +43,13 @@ public class Test {
 			Utility.findNode(nodes.get(0), "Node2");
 			Utility.findNode(nodes.get(0), "IDon'tExist");
 
-			/*
-			 * System.out.println("Type something to close all " + nodes.size()
-			 * + " nodes."); try { System.in.read(); } catch (IOException e) {
-			 * e.printStackTrace(); }
-			 * 
-			 * for (int i = 0; i < nodes.size(); i++) {
-			 * Utility.removeNode(nodes.get(i)); System.out.println("Node " + i
-			 * + " removed!"); Utility.sleep(100); }
-			 */
+			int rand = (int) (Math.random() * nodes.size());
+			Utility.removeNode(nodes.get(rand));
+			System.out.println("Node " + rand + " removed!");
+			Utility.sleep(100);
+			rand = (int) (Math.random() * nodes.size());
+			Utility.removeNode(nodes.get(rand));
+			System.out.println("Node " + rand + " removed!");
 
 		} catch (UnknownHostException e1) {
 			e1.printStackTrace();
