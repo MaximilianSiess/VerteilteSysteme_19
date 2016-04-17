@@ -72,7 +72,7 @@ public class Node extends Thread {
 
 	@Override
 	public void run() {
-		ExecutorService executor = Executors.newFixedThreadPool(n * 3);
+		final ExecutorService executor = Executors.newFixedThreadPool(n * 3);
 		executor.submit(new Runnable() {
 
 			@Override
@@ -192,7 +192,7 @@ public class Node extends Thread {
 				} else {
 					// add new request
 					searchedNames.add(destination);
-					requests.replace(initiator, searchedNames);
+					requests.put(initiator, searchedNames);	
 				}
 			} else {
 				List<String> searchedNames = new LinkedList<String>();
@@ -290,7 +290,7 @@ public class Node extends Thread {
 					} else {
 						// add new request
 						msgs.add(text);
-						inbox.replace(initiator, msgs);
+						inbox.put(initiator, msgs);
 					}
 				} else {
 					List<String> msgs = new LinkedList<String>();
