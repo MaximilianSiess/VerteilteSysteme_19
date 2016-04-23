@@ -1,9 +1,8 @@
 package ex2_4;
 
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -24,18 +23,17 @@ public class MultiServer {
 		// Add a hook for shutdown exception handling
 		// NOTE: Hook does not work inside Eclipse
 		// must send a TERM signal with kill
-		/*
-		 * Runtime.getRuntime().addShutdownHook(new Thread() {
-		 * 
-		 * @Override public void run() { System.out.println(
-		 * "Shutdown hook activated!"); System.out.println(
-		 * "Shutting Server down.."); try { connection.close(); } catch
-		 * (IOException e) { System.out.println("Could not close server socket."
-		 * ); e.printStackTrace(); } catch (NullPointerException e) {
-		 * System.out.println("No connections found."); } finally {
-		 * executor.shutdown(); // Wait for all threads to finish while
-		 * (!executor.isTerminated()) { System.out.print("."); } } } });
-		 */
+		//
+		// Runtime.getRuntime().addShutdownHook(new Thread() {
+		//
+		// @Override public void run() { System.out.println(
+		// "Shutdown hook activated!"); System.out.println(
+		// "Shutting Server down.."); try { connection.close(); } catch
+		// (IOException e) { System.out.println("Could not close server socket."
+		// ); e.printStackTrace(); } catch (NullPointerException e) {
+		// System.out.println("No connections found."); } finally {
+		// executor.shutdown(); // Wait for all threads to finish while
+		// (!executor.isTerminated()) { System.out.print("."); } } } });
 
 		// Server logic
 		try {
