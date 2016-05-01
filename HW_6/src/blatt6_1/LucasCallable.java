@@ -1,4 +1,4 @@
-package blatt6;
+package blatt6_1;
 
 import java.util.concurrent.Callable;
 

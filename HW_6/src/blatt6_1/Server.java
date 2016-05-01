@@ -1,4 +1,4 @@
-package blatt6;
+package blatt6_1;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -19,11 +19,10 @@ public class Server {
 
 			// 1) Create Service
 			ServiceProvider<Integer> service = new ServiceProvider<Integer>();
-			service.setLimit(3);
 			service.start();
 
 			// 2) Export Service (make public available on some port)
-			Service<Integer> stub = (Service<Integer>) UnicastRemoteObject.exportObject(service, 0);
+			IService<Integer> stub = (IService<Integer>) UnicastRemoteObject.exportObject(service, 0);
 
 			// 3) get RMI Registry reference (started by this application)
 			Registry registry = LocateRegistry.createRegistry(REGISTRY_PORT_NUMBER);

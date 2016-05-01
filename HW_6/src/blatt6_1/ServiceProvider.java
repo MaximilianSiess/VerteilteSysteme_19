@@ -1,4 +1,4 @@
-package blatt6;
+package blatt6_1;
 
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -12,16 +12,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class ServiceProvider<T> extends Thread implements Service<T> {
+import javax.naming.LimitExceededException;
+
+public class ServiceProvider<T> extends Thread implements IService<T> {
 	ExecutorService executor = Executors.newCachedThreadPool();
-	int limit;
+	int limit = 3;
 	int currentID = 0;
 	Map<Integer, Future<T>> jobs = new HashMap<Integer, Future<T>>();
-
-	@Override
-	public void setLimit(int limit) throws RemoteException {
-		this.limit = limit;
-	}
 
 	@Override
 	public Job<T> submit(Callable<T> task) throws RemoteException, Exception {
@@ -29,8 +26,7 @@ public class ServiceProvider<T> extends Thread implements Service<T> {
 			Job<T> job = new Job<T>(currentID, this);
 			// Check if limit is reached
 			if (jobs.size() >= limit) {
-				System.out.println("Service limit is reached! Task not accepted.");
-				return null;
+				throw new LimitExceededException();
 			}
 
 			Future<T> future = executor.submit(task);

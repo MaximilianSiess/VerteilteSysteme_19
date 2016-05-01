@@ -1,12 +1,10 @@
-package blatt6;
+package blatt6_1;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.concurrent.Callable;
 
-public interface Service<T> extends Remote {
-
-	public void setLimit(int limit) throws RemoteException;
+public interface IService<T> extends Remote {
 
 	public Job<T> submit(Callable<T> task) throws RemoteException, Exception;
 

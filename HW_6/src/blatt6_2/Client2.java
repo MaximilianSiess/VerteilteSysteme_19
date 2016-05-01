@@ -1,21 +1,33 @@
-package blatt6;
+package blatt6_2;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-public class Client {
+import blatt6_1.Job;
+import blatt6_1.LucasCallable;
 
-	private static final String SERVER_NAME = "localhost";
+public class Client2 extends Thread {
 
-	public static void main(String[] args) {
+	private final String SERVER_NAME;
+
+	private final Dispatcher<Integer> dispatcher;
+
+	public Client2(Dispatcher<Integer> dispatcher) {
+		super();
+		SERVER_NAME = "localhost";
+		this.dispatcher = dispatcher;
+	}
+
+	@Override
+	public void run() {
 		try {
 			// 1) get registry connection
-			Registry registry = LocateRegistry.getRegistry(SERVER_NAME, Server.REGISTRY_PORT_NUMBER);
+			Registry registry = LocateRegistry.getRegistry(SERVER_NAME, dispatcher.getRegistryPortNumber());
 
 			// 2) lookup service reference
-			Service<Integer> service = (Service<Integer>) registry.lookup(Server.SERVICE_NAME);
+			IDispatcher<Integer> service = (IDispatcher<Integer>) registry.lookup(dispatcher.getServiceName());
 
 			// 3) use service (reference can be used like a local instance)
 			useService(service);
@@ -29,7 +41,7 @@ public class Client {
 		}
 	}
 
-	private static void useService(Service<Integer> service) {
+	private static void useService(IDispatcher<Integer> service) {
 		int rounds = 50;
 		int lucas = 1;
 
@@ -48,7 +60,7 @@ public class Client {
 					while (!job.isDone()) {
 						Thread.sleep(100);
 					}
-					System.out.println("Job " + job.getId() + " done, result: " + job.getResult());
+					System.out.println("Task " + job.getId() + " done, result: " + job.getResult());
 				}
 
 			}

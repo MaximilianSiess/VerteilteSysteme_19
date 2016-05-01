@@ -1,14 +1,14 @@
-package blatt6;
+package blatt6_1;
 
 import java.rmi.RemoteException;
 
-public class Job<T> implements JobInterface<T>, java.io.Serializable {
+public class Job<T> implements IJob<T>, java.io.Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private int id;
-	private Service<T> service;
+	private IService<T> service;
 
-	public Job(int id, Service<T> service) {
+	public Job(int id, IService<T> service) {
 		super();
 		this.id = id;
 		this.service = service;

@@ -1,6 +1,6 @@
-package blatt6;
+package blatt6_1;
 
-public interface JobInterface<T> {
+public interface IJob<T> {
 
 	public boolean isDone();
 
