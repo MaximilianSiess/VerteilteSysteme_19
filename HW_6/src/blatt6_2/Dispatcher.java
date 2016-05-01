@@ -29,7 +29,6 @@ public class Dispatcher<T> implements IDispatcher<T>, Serializable {
 		this.servicePool = new LinkedList<IService>();
 		this.currentService = 0;
 		try {
-
 			System.out.println("Starting up dispatcher ... ");
 
 			// 1) Export Service (make public available on some port)
@@ -57,19 +56,21 @@ public class Dispatcher<T> implements IDispatcher<T>, Serializable {
 		while (true) {
 			synchronized (servicePool) {
 				while (servicePool.isEmpty()) {
+					// waits until at least one service has been registered
 					servicePool.wait();
 				}
 
 				try {
+					// forwarding task to services in round robin manner
 					if (servicePool.size() < currentService) {
-						return servicePool.get(currentService).submit(task);
+						return servicePool.get(currentService++).submit(task);
 					} else {
 						currentService = 0;
-						return servicePool.get(currentService).submit(task);
+						return servicePool.get(currentService++).submit(task);
 					}
 				} catch (LimitExceededException e) {
 					System.out.println("One of the servers is too busy...");
-					currentService++;
+					// currentService has already been incremented by 1
 				}
 			}
 		}
