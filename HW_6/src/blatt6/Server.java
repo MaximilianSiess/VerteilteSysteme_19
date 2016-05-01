@@ -18,13 +18,14 @@ public class Server {
 			System.out.println("Starting up service ... ");
 
 			// 1) Create Service
-			Service service = new ServiceProvider();
-                        service.setLimit(3);
+			ServiceProvider<Integer> service = new ServiceProvider<Integer>();
+			service.setLimit(3);
+			service.start();
 
 			// 2) Export Service (make public available on some port)
-			Service stub = (Service) UnicastRemoteObject.exportObject(service, 0);
+			Service<Integer> stub = (Service<Integer>) UnicastRemoteObject.exportObject(service, 0);
 
-			// 3) get rmi Registry reference (started by this application)
+			// 3) get RMI Registry reference (started by this application)
 			Registry registry = LocateRegistry.createRegistry(REGISTRY_PORT_NUMBER);
 
 			// 4) bind service to corresponding name within the registry
@@ -34,10 +35,10 @@ public class Server {
 
 		} catch (RemoteException re) {
 			System.err.println("Error publishing service: ");
-                        re.printStackTrace();
-                } catch (Exception e) {
-                    System.out.println("Anything else failed:");
-                    e.printStackTrace();
-                }
+			re.printStackTrace();
+		} catch (Exception e) {
+			System.out.println("Anything else failed:");
+			e.printStackTrace();
+		}
 	}
 }
