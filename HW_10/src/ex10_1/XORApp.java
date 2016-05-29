@@ -21,8 +21,7 @@ public class XORApp {
     private static boolean running = true;
     InetAddress adress;
     
-    private static String encryptDecrypt(String input) {
-            char[] key = {'K', 'C', 'Q'}; //Can be any chars, and any length array
+    private static String encryptDecrypt(String input, char[] key) {
             StringBuilder output = new StringBuilder();
 
             for(int i = 0; i < input.length(); i++) {
@@ -51,7 +50,7 @@ public class XORApp {
         // ====================================================================== Server running - become CLIENT
         if (serverExists) {
             // The key for the XOR encryption
-            String key = "Iamakeydasfasdfs!";
+            char[] key = {'K', 'C', 'Q'}; //Can be any chars, and any length array
             try {
                 connection = new Socket("localhost", 1337);
 
@@ -68,13 +67,12 @@ public class XORApp {
                         if (message.compareTo("exit") == 0) {
                             running = false;
                         } else {
-                            ClientOut.println(encryptDecrypt(message));
+                            ClientOut.println(encryptDecrypt(message, key));
                             ClientOut.flush();
                             System.out.println("Sent server the encrypted message.");
                             Thread.sleep(500);
-                            byte[] response = new byte[64];
                             String decrypted_response = ClientIn.readLine();
-                            System.out.println("Server response: " + decrypted_response);
+                            System.out.println("Server response: " + encryptDecrypt(decrypted_response, key));
                         }
                 }
                 connection.close();
@@ -84,7 +82,7 @@ public class XORApp {
             System.out.println("Client stopped.");
         } else { // ============================================================= No server running - become SERVER
             // The key for the XOR encryption
-            String key = "";
+            char[] key = {'K', 'C', 'Q'}; //Can be any chars, and any length array
             try {
                 socket = new ServerSocket();
                 socket.setReuseAddress(true);
@@ -99,9 +97,9 @@ public class XORApp {
                 while (running) {
                         String encrypted_message = ServerIn.readLine();
                         System.out.println("Recieved message from client: " + encrypted_message);
-                        String decrypted_message = encryptDecrypt(encrypted_message);
+                        String decrypted_message = encryptDecrypt(encrypted_message, key);
                         System.out.println("Decrypted message: " + decrypted_message);
-                        ServerOut.println(encryptDecrypt(encrypted_message));
+                        ServerOut.println(encryptDecrypt(decrypted_message, key));
                         ServerOut.flush();
                 }
 
