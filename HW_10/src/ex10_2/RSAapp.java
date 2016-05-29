@@ -40,7 +40,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-public class Server {
+public class RSAapp {
     private static ServerSocket socket;
     private static Socket connection = null;
     private static boolean running = true;
@@ -59,7 +59,7 @@ public class Server {
         }
     }
     
-    static void generateRSAKeys() {
+    static void generateRSAKeys(boolean server) {
         KeyPairGenerator kpg;
         try {
             kpg = KeyPairGenerator.getInstance("RSA");
@@ -71,13 +71,15 @@ public class Server {
             KeyFactory fact = KeyFactory.getInstance("RSA");
             RSAPublicKeySpec pub = fact.getKeySpec(kp.getPublic(), RSAPublicKeySpec.class);
             RSAPrivateKeySpec priv = fact.getKeySpec(kp.getPrivate(), RSAPrivateKeySpec.class);
-
-            saveToFile("public.key", pub.getModulus(),
-            pub.getPublicExponent());
-            saveToFile("private.key", priv.getModulus(),
-            priv.getPrivateExponent());
+            if (server) {
+                saveToFile("public.key", pub.getModulus(), pub.getPublicExponent());
+                saveToFile("private.key", priv.getModulus(), priv.getPrivateExponent());
+            } else {
+                saveToFile("public2.key", pub.getModulus(), pub.getPublicExponent());
+                saveToFile("private2.key", priv.getModulus(), priv.getPrivateExponent());
+            }
         } catch (NoSuchAlgorithmException | IOException | InvalidKeySpecException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(RSAapp.class.getName()).log(Level.SEVERE, null, ex);
         }
         System.out.println("RSA keys generated and saved.");
     }
@@ -105,10 +107,16 @@ public class Server {
         }
     }
     
-    public static byte[] rsaEncrypt(byte[] data) {
+    public static byte[] rsaEncrypt(byte[] data, boolean server) {
         byte[] cipherData = null;
         try {
-            PublicKey pubKey = (PublicKey) readKeyFromFile("public.key", true);
+            String filename;
+            if (server) {
+                filename = "public.key"; // client key
+            } else {
+                filename = "public2.key"; // server key
+            }
+            PublicKey pubKey = (PublicKey) readKeyFromFile(filename, true);
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.ENCRYPT_MODE, pubKey);
             cipherData = cipher.doFinal(data);
@@ -116,15 +124,21 @@ public class Server {
         } catch (IOException | NoSuchAlgorithmException | NoSuchPaddingException 
                 | InvalidKeyException | IllegalBlockSizeException 
                 | BadPaddingException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(RSAapp.class.getName()).log(Level.SEVERE, null, ex);
         }
         return cipherData;
     }
     
-    public static byte[] rsaDecrypt(byte[] data) {
+    public static byte[] rsaDecrypt(byte[] data, boolean server) {
         byte[] cipherData = null;
         try {
-            PrivateKey priKey = (PrivateKey) readKeyFromFile("private.key", false);
+            String filename;
+            if (server) {
+                filename = "private2.key"; // server key
+            } else {
+                filename = "private.key"; // client key
+            }
+            PrivateKey priKey = (PrivateKey) readKeyFromFile(filename, false);
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, priKey);
             cipherData = cipher.doFinal(data);
@@ -132,7 +146,7 @@ public class Server {
         } catch (IOException | NoSuchAlgorithmException | NoSuchPaddingException 
                 | InvalidKeyException | IllegalBlockSizeException 
                 | BadPaddingException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(RSAapp.class.getName()).log(Level.SEVERE, null, ex);
         }
         return cipherData;
     }
@@ -147,15 +161,16 @@ public class Server {
             serverExists = false;
         }
         
-        // ====================================================================== Server running - become client
+        // ====================================================================== Server running - become CLIENT
         if (serverExists) {
-            
+             // Generate RSA keys first - generate client keys
+            generateRSAKeys(false);
             System.out.println("Public.key found. Assuming client role.");
             
             try {
                 connection = new Socket("localhost", 1337);
 
-                BufferedReader ClientIn = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                InputStream ClientIn = connection.getInputStream();
                 OutputStream ClientOut = connection.getOutputStream();
                 
                 while (running) {
@@ -167,26 +182,34 @@ public class Server {
                         // Check if client is supposed to close
                         if (message.compareTo("exit") == 0) {
                             //Delete Keys
-                            Path path = FileSystems.getDefault().getPath("public.key"); // Only need to delete public keys for it to work
-                            Files.delete(path);
+                            Files.delete(FileSystems.getDefault().getPath("public.key"));
+                            Files.delete(FileSystems.getDefault().getPath("public2.key"));
+                            Files.delete(FileSystems.getDefault().getPath("private.key"));
+                            Files.delete(FileSystems.getDefault().getPath("private2.key"));
                             running = false;
                         } else {
                             byte[] data = message.getBytes(StandardCharsets.UTF_8);
-                            data = rsaEncrypt(data);
+                            data = rsaEncrypt(data, false);
                             ClientOut.write(data);
                             ClientOut.flush();
                             System.out.println("Sent server the encrypted message.");
+                            Thread.sleep(500);
+                            byte[] response = new byte[64];
+                            ClientIn.read(response);
+                            response = rsaDecrypt(response, false);
+                            String decrypted_response = new String(response, StandardCharsets.UTF_8);
+                            System.out.println("Server response: " + decrypted_response);
                         }
                 }
                 connection.close();
             } catch (IOException | InterruptedException ex) {
-                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(RSAapp.class.getName()).log(Level.SEVERE, null, ex);
             } 
-            System.out.println("Client stopped.");
-        } else { // ============================================================= No server running - become server
+            System.out.println("Client stopped, cleaned up keys.");
+        } else { // ============================================================= No server running - become SERVER
             System.out.println("Public.key not found. Assuming server role.");
-            // Generate RSA keys first
-            generateRSAKeys();
+            // Generate RSA keys first - generate server keys
+            generateRSAKeys(true);
             try {
                 socket = new ServerSocket();
                 socket.setReuseAddress(true);
@@ -196,16 +219,22 @@ public class Server {
                 connection = socket.accept();
                 System.out.println("Server: Connection received from " + connection.getInetAddress().getHostName());
                 InputStream ServerIn = connection.getInputStream();
-                PrintWriter ServerOut = new PrintWriter(connection.getOutputStream(), true);
+                OutputStream ServerOut = connection.getOutputStream();
                 
                 while (running) {
                         byte[] message = new byte[64];
                         ServerIn.read(message);
                         String encrypted_message = new String(message, StandardCharsets.UTF_8);
                         System.out.println("Recieved message from client: " + encrypted_message);
-                        message = rsaDecrypt(message);
+                        message = rsaDecrypt(message, true);
                         String decrypted_message = new String(message, StandardCharsets.UTF_8);
                         System.out.println("Decrypted message: " + decrypted_message);
+                        
+                        String response_string = "Successfully recieved " + decrypted_message + "!";
+                        byte[] response = response_string.getBytes(StandardCharsets.UTF_8);
+                        response = rsaEncrypt(response, true);
+                        ServerOut.write(response);
+                        ServerOut.flush();
                 }
 
                 connection.close();
