@@ -11,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,12 +21,12 @@ public class XORApp {
     private static boolean running = true;
     InetAddress adress;
 
-    public static String encode(String s, String key) {
-        return new String(xorWithKey(s.getBytes(), key.getBytes())).replaceAll("\r", "").replaceAll("\n", "");
+    public static byte[] encode(String s, String key) {
+        return xorWithKey(s.getBytes(), key.getBytes());
     }
 
-    public static String decode(String s, String key) {
-        return new String(xorWithKey(s.getBytes(), key.getBytes())).replaceAll("\r", "").replaceAll("\n", "");
+    public static String decode(byte[] s, String key) {
+        return new String(xorWithKey(s, key.getBytes()), StandardCharsets.UTF_8);
     }
 
     private static byte[] xorWithKey(byte[] a, byte[] key) {
@@ -59,8 +60,8 @@ public class XORApp {
             try {
                 connection = new Socket("localhost", 1337);
 
-                BufferedReader ClientIn = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                PrintWriter ClientOut = new PrintWriter(connection.getOutputStream(), true);
+                InputStream ClientIn = connection.getInputStream();
+                OutputStream ClientOut = connection.getOutputStream();
                 
                 while (running) {
                         Thread.sleep(500);            
@@ -72,13 +73,15 @@ public class XORApp {
                         if (message.compareTo("exit") == 0) {
                             running = false;
                         } else {
-                            message = encode(message, key);                            
-                            ClientOut.println(message);
+                            byte[] data = encode(message, key);                            
+                            ClientOut.write(data);
                             ClientOut.flush();
                             System.out.println("Sent server the encrypted message.");
                             Thread.sleep(500);
-                            String response = ClientIn.readLine();
+                            byte[] response = new byte[64];
+                            ClientIn.read(response);
                             String decrypted_response = decode(response, key);
+                            decrypted_response = decrypted_response.substring(0, message.length());
                             System.out.println("Server response: " + decrypted_response);
                         }
                 }
@@ -89,7 +92,7 @@ public class XORApp {
             System.out.println("Client stopped.");
         } else { // ============================================================= No server running - become SERVER
             // The key for the XOR encryption
-            String key = "Iamakeydasfasdfs!";
+            String key = "Iamakey!";
             try {
                 socket = new ServerSocket();
                 socket.setReuseAddress(true);
@@ -98,18 +101,19 @@ public class XORApp {
                 System.out.println("Server waiting for connection");
                 connection = socket.accept();
                 System.out.println("Server: Connection received from " + connection.getInetAddress().getHostName());
-                BufferedReader ServerIn = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		PrintWriter ServerOut = new PrintWriter(connection.getOutputStream(), true);
+                InputStream ServerIn = connection.getInputStream();
+		OutputStream ServerOut = connection.getOutputStream();
                 
                 while (running) {
-                        String encrypted_message = ServerIn.readLine();
+                        byte[] message = new byte[64];
+                        ServerIn.read(message);
+                        String encrypted_message = new String(message, StandardCharsets.UTF_8);
                         System.out.println("Recieved message from client: " + encrypted_message);
-                        String decrypted_message = decode(encrypted_message, key);
+                        String decrypted_message = decode(message, key);
                         System.out.println("Decrypted message: " + decrypted_message);
-                        
-                        String response_string = decrypted_message;
-                        String response = encode(response_string, key);
-                        ServerOut.println(response);
+
+                        byte[] response = encode(decrypted_message, key);
+                        ServerOut.write(response);
                         ServerOut.flush();
                 }
 
